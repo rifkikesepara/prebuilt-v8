@@ -133,7 +133,7 @@ jobs:
           Copy-Item -Path ./v8/out.gn/x64.release/obj/${{ matrix.config.library_name }} -Destination ./artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.library_name }}
       
       - name: Upload Headers & Monolithic Lib
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.config.name }}_${{ matrix.config.architecture }}_v8_monolith
           path: artifact/

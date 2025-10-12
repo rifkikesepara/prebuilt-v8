@@ -67,6 +67,7 @@ jobs:
         run: |
           Set-Location -Path v8
           $build_type = "${{ matrix.config.build_type }}"
+          New-Item -ItemType Directory -Path ./out.gn/x64.$build_type -Force
           Copy-Item "../platforms/${{ matrix.config.name }}_${{ matrix.config.architecture }}/args.gn" -Destination "./out.gn/x64.$build_type/args.gn" -Force
           gn gen out.gn/x64.$build_type
           ninja -C out.gn/x64.$build_type

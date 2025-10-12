@@ -63,24 +63,15 @@ jobs:
         shell: pwsh
         run: |
           Set-Location -Path v8
-
-          # Detect VS 2022 and override toolchain
-          $vsPath = Get-ChildItem "C:\Program Files\Microsoft Visual Studio\2022" | Select-Object -First 1 | ForEach-Object { $_.FullName }
-          $env:GYP_MSVS_OVERRIDE_PATH = $vsPath
-          $env:GYP_MSVS_VERSION = "17.0"
-
-          # Patch vs_toolchain.py to support VS 2022
-          (Get-Content "build/vs_toolchain.py") -replace "MSVS_VERSIONS = collections.OrderedDict\(\[", "MSVS_VERSIONS = collections.OrderedDict([`n    ('17.0', 'Visual Studio 2022')," | Set-Content "build/vs_toolchain.py"
-
-          # Prepare build directory and args.gn
           $buildType = "${{ matrix.config.build_type }}"
           $outDir = "out.gn/x64.$buildType"
           New-Item -ItemType Directory -Path $outDir -Force
-          Copy-Item "../platforms/windows_x64/args.$buildType.gn" -Destination "$outDir/args.gn" -Force
 
-          # Generate and build
-          gn gen $outDir
-          ninja -C $outDir
+          python tools/dev/v8gen.py x64.$buildType
+          Copy-Item "../platforms/${{ matrix.config.name }}_${{ matrix.config.architecture }}/args.gn" -Destination "./out.gn/x64.$buildType/args.gn" -force
+          gn gen out.gn/x64.$buildType
+          Get-Content ./out.gn/x64.$buildType/args.gn | Write-Output
+          ninja -C out.gn/x64.$buildType
 
       - name: Prepare Artifact Directory
         shell: pwsh

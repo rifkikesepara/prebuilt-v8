@@ -67,7 +67,7 @@ jobs:
           $outDir = "out.gn/x64.$buildType"
           New-Item -ItemType Directory -Path $outDir -Force
 
-          Copy-Item "../platforms/${{ matrix.config.name }}_${{ matrix.config.architecture }}/args.gn" -Destination "./out.gn/x64.$buildType/args.gn" -force
+          Copy-Item "../platforms/${{ matrix.config.name }}_${{ matrix.config.architecture }}/args.$buildType.gn" -Destination "./out.gn/x64.$buildType/args.gn" -force
 
           python tools/dev/v8gen.py x64.$buildType
           # gn gen out.gn/x64.$buildType

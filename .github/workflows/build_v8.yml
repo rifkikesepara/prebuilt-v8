@@ -22,12 +22,6 @@ jobs:
             library_name: v8_monolith.lib
             build_type: debug
 
-          - os: ubuntu-latest
-            name: linux
-            architecture: x64
-            library_name: libv8_monolith.a
-            build_type: release
-
     env:
       DEPOT_TOOLS_WIN_TOOLCHAIN: 0
 
@@ -45,8 +39,7 @@ jobs:
         with:
           python-version: 2.7.17
 
-      - name: Install MSVC/MSBuild (Windows)
-        if: runner.os == 'Windows'
+      - name: Install MSVC/MSBuild
         uses: microsoft/setup-msbuild@v1.1
 
       - name: Get Target V8 Version
@@ -55,19 +48,12 @@ jobs:
         with:
           path: ./V8_VERSION
 
-      - name: Install Depot Tools (Windows)
-        if: runner.os == 'Windows'
+      - name: Install Depot Tools
         run: |
           Invoke-WebRequest -Uri "https://storage.googleapis.com/chrome-infra/depot_tools.zip" -OutFile depot_tools.zip
           Expand-Archive -Path depot_tools.zip -DestinationPath depot_tools
           Remove-Item depot_tools.zip
           echo "$pwd\depot_tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Install Depot Tools (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-          echo "$PWD/depot_tools" >> $GITHUB_PATH
 
       - name: Checkout V8 Source Code
         run: |

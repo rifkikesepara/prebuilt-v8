@@ -69,6 +69,10 @@ jobs:
           $build_type = "${{ matrix.config.build_type }}"
           New-Item -ItemType Directory -Path ./out.gn/x64.$build_type -Force
           Copy-Item "../platforms/${{ matrix.config.name }}_${{ matrix.config.architecture }}/args.gn" -Destination "./out.gn/x64.$build_type/args.gn" -Force
+          $vsPath = Get-ChildItem "C:\Program Files\Microsoft Visual Studio\2022" | Select-Object -First 1 | ForEach-Object { $_.FullName }
+          $env:GYP_MSVS_OVERRIDE_PATH = $vsPath
+          $env:GYP_MSVS_VERSION = "2022"
+          
           gn gen out.gn/x64.$build_type
           ninja -C out.gn/x64.$build_type
 

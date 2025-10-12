@@ -34,7 +34,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install MSVC/MSBuild
         uses: microsoft/setup-msbuild@v1.1
@@ -64,44 +64,10 @@ jobs:
         run: |
           Set-Location -Path v8
 
-          # Set Visual Studio override for V8 build system
+          # Detect VS 2022 path and override toolchain
           $vsPath = Get-ChildItem "C:\Program Files\Microsoft Visual Studio\2022" | Select-Object -First 1 | ForEach-Object { $_.FullName }
           $env:GYP_MSVS_OVERRIDE_PATH = $vsPath
           $env:GYP_MSVS_VERSION = "2022"
 
-          # Patch vs_toolchain.py to accept VS 2022
-          (Get-Content "build/vs_toolchain.py") -replace "'16.0'", "'16.0', '17.0'" | Set-Content "build/vs_toolchain.py"
-
-          # Create output directory and copy args.gn
-          $buildType = "${{ matrix.config.build_type }}"
-          $outDir = "out.gn/x64.$buildType"
-          New-Item -ItemType Directory -Path $outDir -Force
-          Copy-Item "../platforms/windows_x64/args.$buildType.gn" -Destination "$outDir/args.gn" -Force
-
-          # Generate and build
-          gn gen $outDir
-          ninja -C $outDir
-
-      - name: Prepare Artifact Directory
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path ./artifact/ -Force
-          Copy-Item -Path ./v8/include -Recurse -Filter *.h -Destination ./artifact/include -Container
-          Copy-Item -Path ./v8/out.gn/x64.${{ matrix.config.build_type }}/obj/${{ matrix.config.library_name }} -Destination ./artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_${{ matrix.config.library_name }}
-
-      - name: Upload Headers & Monolithic Lib
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_v8_monolith
-          path: artifact/
-
-      - name: Publish Compiled Libraries
-        if: startsWith(github.event.head_commit.message, '[Release]') && github.ref == 'refs/heads/master'
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          name: V8 ${{ steps.version.outputs.content }}
-          tag_name: v${{ steps.version.outputs.content }}
-          files: |
-            artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_${{ matrix.config.library_name }}
+          # Patch vs_toolchain.py to support VS 2022
+          (Get-Content "build/vs_toolchain.py") -replace "MSVS_VERSIONS = collections

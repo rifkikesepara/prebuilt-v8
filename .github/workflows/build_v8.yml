@@ -4,20 +4,17 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    name: ${{ matrix.config.name }}_${{ matrix.config.architecture }}
+    name: ${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}
     if: "!startsWith(github.event.head_commit.message, '[Skip]')"
-    runs-on: ${{ matrix.config.os }}
+    runs-on: windows-latest
     strategy:
       matrix:
         config:
-          - os: windows-latest
-            name: windows
+          - name: windows
             architecture: x64
             library_name: v8_monolith.lib
             build_type: release
-
-          - os: windows-latest
-            name: windows
+          - name: windows
             architecture: x64
             library_name: v8_monolith.lib
             build_type: debug
@@ -66,20 +63,29 @@ jobs:
         shell: pwsh
         run: |
           Set-Location -Path v8
-          $build_type = "${{ matrix.config.build_type }}"
-          New-Item -ItemType Directory -Path ./out.gn/x64.$build_type -Force
-          Copy-Item "../platforms/${{ matrix.config.name }}_${{ matrix.config.architecture }}/args.gn" -Destination "./out.gn/x64.$build_type/args.gn" -Force
+
+          # Set Visual Studio override for V8 build system
           $vsPath = Get-ChildItem "C:\Program Files\Microsoft Visual Studio\2022" | Select-Object -First 1 | ForEach-Object { $_.FullName }
           $env:GYP_MSVS_OVERRIDE_PATH = $vsPath
           $env:GYP_MSVS_VERSION = "2022"
-          
-          gn gen out.gn/x64.$build_type
-          ninja -C out.gn/x64.$build_type
+
+          # Patch vs_toolchain.py to accept VS 2022
+          (Get-Content "build/vs_toolchain.py") -replace "'16.0'", "'16.0', '17.0'" | Set-Content "build/vs_toolchain.py"
+
+          # Create output directory and copy args.gn
+          $buildType = "${{ matrix.config.build_type }}"
+          $outDir = "out.gn/x64.$buildType"
+          New-Item -ItemType Directory -Path $outDir -Force
+          Copy-Item "../platforms/windows_x64/args.$buildType.gn" -Destination "$outDir/args.gn" -Force
+
+          # Generate and build
+          gn gen $outDir
+          ninja -C $outDir
 
       - name: Prepare Artifact Directory
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Path ./artifact/
+          New-Item -ItemType Directory -Path ./artifact/ -Force
           Copy-Item -Path ./v8/include -Recurse -Filter *.h -Destination ./artifact/include -Container
           Copy-Item -Path ./v8/out.gn/x64.${{ matrix.config.build_type }}/obj/${{ matrix.config.library_name }} -Destination ./artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_${{ matrix.config.library_name }}
 

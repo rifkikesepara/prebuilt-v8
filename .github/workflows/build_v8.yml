@@ -64,10 +64,10 @@ jobs:
         run: |
           Set-Location -Path v8
 
-          # Detect VS 2022 path and override toolchain
+          # Detect VS 2022 and override toolchain
           $vsPath = Get-ChildItem "C:\Program Files\Microsoft Visual Studio\2022" | Select-Object -First 1 | ForEach-Object { $_.FullName }
           $env:GYP_MSVS_OVERRIDE_PATH = $vsPath
-          $env:GYP_MSVS_VERSION = "2022"
+          $env:GYP_MSVS_VERSION = "17.0"
 
           # Patch vs_toolchain.py to support VS 2022
           (Get-Content "build/vs_toolchain.py") -replace "MSVS_VERSIONS = collections.OrderedDict\(\[", "MSVS_VERSIONS = collections.OrderedDict([`n    ('17.0', 'Visual Studio 2022')," | Set-Content "build/vs_toolchain.py"

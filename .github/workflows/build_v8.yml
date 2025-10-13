@@ -83,18 +83,27 @@ jobs:
           Set-Location -Path v8
           $buildType = "${{ matrix.config.build_type }}"
           $outDir = "out.gn/x64.$buildType"
-          New-Item -ItemType Directory -Path $outDir -Force
-          Copy-Item "../platforms/${{ matrix.config.name }}_${{ matrix.config.architecture }}/args.$buildType.gn" -Destination "./out.gn/x64.$buildType/args.gn" -force
-          python tools/dev/v8gen.py x64.$buildType
-          # gn gen out.gn/x64.$buildType
-          Get-Content ./out.gn/x64.$buildType/args.gn | Write-Output
-          ninja -C out.gn/x64.$buildType
+          $libPath = "$outDir/v8_monolith.lib"
+
+          if (Test-Path $libPath) {
+            Write-Host "✅ Skipping build: $libPath already exists"
+          } else {
+            Write-Host "🔨 Starting V8 build for $buildType"
+            New-Item -ItemType Directory -Path $outDir -Force
+            Copy-Item "../platforms/${{ matrix.config.name }}_${{ matrix.config.architecture }}/args.$buildType.gn" -Destination "$outDir/args.gn" -Force
+            python tools/dev/v8gen.py x64.$buildType
+            Get-Content "$outDir/args.gn" | Write-Output
+            ninja -C $outDir
+          }
+
       - name: Prepare Artifact Directory
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path ./artifact/ -Force
           Copy-Item -Path ./v8/include -Recurse -Filter *.h -Destination ./artifact/include -Container
-          Copy-Item -Path ./v8/out.gn/x64.${{ matrix.config.build_type }}/obj/${{ matrix.config.library_name }} -Destination ./artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_${{ matrix.config.library_name }}
+          Copy-Item -Path "./v8/out.gn/x64.${{ matrix.config.build_type }}/${{ matrix.config.library_name }}" `
+            -Destination "./artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_${{ matrix.config.library_name }}"
+
       - name: Upload Headers & Monolithic Lib
         uses: actions/upload-artifact@v4
         with:

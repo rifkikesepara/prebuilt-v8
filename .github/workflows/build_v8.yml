@@ -39,15 +39,14 @@ jobs:
       - name: Install MSVC/MSBuild
         uses: microsoft/setup-msbuild@v1.1
 
-      - name: Install Windows SDK Debugging Tools via VS Build Tools
+      - name: Install Windows Debugging Tools (standalone SDK)
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vs_BuildTools.exe" -OutFile "vs_BuildTools.exe"
-          .\vs_BuildTools.exe `
-            --quiet --wait --norestart `
-            --add Microsoft.VisualStudio.Component.Windows10SDK.19041 `
-            --add Microsoft.VisualStudio.Component.Windows10SDK.19041.DebuggingTools
+          Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=2120843" -OutFile "winsdksetup.exe"
+          Start-Process -FilePath ".\winsdksetup.exe" -ArgumentList `
+            "/quiet", "/norestart", "/features", "OptionId.WindowsDesktopDebuggers" `
+            -Wait
 
       - name: Verify cdb.exe installation
         shell: pwsh

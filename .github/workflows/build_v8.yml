@@ -83,11 +83,11 @@ jobs:
 
           # Patch copy_cdb_to_output.py to skip missing debugger files safely
           $patch = @"
-if os.path.exists(source):
-    shutil.copy(source, target)
-else:
-    print(f"Skipping missing debugger file: {source}")
-"@
+          if os.path.exists(source):
+          shutil.copy(source, target)
+          else:
+          print(f"Skipping missing debugger file: {source}")
+          "@
           (Get-Content "build/win/copy_cdb_to_output.py") -replace "shutil.copy\(source, target\)", $patch | Set-Content "build/win/copy_cdb_to_output.py"
 
           # Set Visual Studio override

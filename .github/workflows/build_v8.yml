@@ -91,7 +91,7 @@ jobs:
             Write-Host "🔨 Starting V8 build for $buildType"
             New-Item -ItemType Directory -Path $outDir -Force
             Copy-Item "../platforms/${{ matrix.config.name }}_${{ matrix.config.architecture }}/args.$buildType.gn" -Destination "$outDir/args.gn" -Force
-            python tools/dev/v8gen.py x64.$buildType
+            gn gen out.gn/x64.$buildType
             Get-Content "$outDir/args.gn" | Write-Output
             ninja -C $outDir
           }

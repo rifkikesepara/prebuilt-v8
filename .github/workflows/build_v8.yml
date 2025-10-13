@@ -48,55 +48,67 @@ jobs:
             --quiet --wait --norestart `
             --add Microsoft.VisualStudio.Component.Windows10SDK.19041 `
             --add Microsoft.VisualStudio.Component.Windows10SDK.19041.DebuggingTools
-      - name: Get Target V8 Version
-        id: version
-        uses: juliangruber/read-file-action@v1
-        with:
-          path: ./V8_VERSION
 
-      - name: Install Depot Tools
-        run: |
-          Invoke-WebRequest -Uri "https://storage.googleapis.com/chrome-infra/depot_tools.zip" -OutFile depot_tools.zip
-          Expand-Archive -Path depot_tools.zip -DestinationPath depot_tools
-          Remove-Item depot_tools.zip
-          echo "$pwd\depot_tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-      - name: Checkout V8 Source Code
-        run: |
-          fetch v8
-          cd v8
-          git checkout ${{ steps.version.outputs.content }}
-          gclient sync
-      - name: Build V8
+      - name: Verify cdb.exe installation
         shell: pwsh
         run: |
-          Set-Location -Path v8
-          $buildType = "${{ matrix.config.build_type }}"
-          $outDir = "out.gn/x64.$buildType"
-          New-Item -ItemType Directory -Path $outDir -Force
-          Copy-Item "../platforms/${{ matrix.config.name }}_${{ matrix.config.architecture }}/args.$buildType.gn" -Destination "./out.gn/x64.$buildType/args.gn" -force
-          python tools/dev/v8gen.py x64.$buildType
-          # gn gen out.gn/x64.$buildType
-          Get-Content ./out.gn/x64.$buildType/args.gn | Write-Output
-          ninja -C out.gn/x64.$buildType
-      - name: Prepare Artifact Directory
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path ./artifact/ -Force
-          Copy-Item -Path ./v8/include -Recurse -Filter *.h -Destination ./artifact/include -Container
-          Copy-Item -Path ./v8/out.gn/x64.${{ matrix.config.build_type }}/obj/${{ matrix.config.library_name }} -Destination ./artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_${{ matrix.config.library_name }}
-      - name: Upload Headers & Monolithic Lib
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_v8_monolith
-          path: artifact/
+          $cdbPath = "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe"
+          if (Test-Path $cdbPath) {
+            Write-Host "✅ cdb.exe found at $cdbPath"
+          } else {
+            Write-Error "❌ cdb.exe not found at $cdbPath"
+            exit 1
+          }
 
-      - name: Publish Compiled Libraries
-        if: startsWith(github.event.head_commit.message, '[Release]') && github.ref == 'refs/heads/master'
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          name: V8 ${{ steps.version.outputs.content }}
-          tag_name: v${{ steps.version.outputs.content }}
-          files: |
-            artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_${{ matrix.config.library_name }}
+      # - name: Get Target V8 Version
+      #   id: version
+      #   uses: juliangruber/read-file-action@v1
+      #   with:
+      #     path: ./V8_VERSION
+
+      # - name: Install Depot Tools
+      #   run: |
+      #     Invoke-WebRequest -Uri "https://storage.googleapis.com/chrome-infra/depot_tools.zip" -OutFile depot_tools.zip
+      #     Expand-Archive -Path depot_tools.zip -DestinationPath depot_tools
+      #     Remove-Item depot_tools.zip
+      #     echo "$pwd\depot_tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      # - name: Checkout V8 Source Code
+      #   run: |
+      #     fetch v8
+      #     cd v8
+      #     git checkout ${{ steps.version.outputs.content }}
+      #     gclient sync
+      # - name: Build V8
+      #   shell: pwsh
+      #   run: |
+      #     Set-Location -Path v8
+      #     $buildType = "${{ matrix.config.build_type }}"
+      #     $outDir = "out.gn/x64.$buildType"
+      #     New-Item -ItemType Directory -Path $outDir -Force
+      #     Copy-Item "../platforms/${{ matrix.config.name }}_${{ matrix.config.architecture }}/args.$buildType.gn" -Destination "./out.gn/x64.$buildType/args.gn" -force
+      #     python tools/dev/v8gen.py x64.$buildType
+      #     # gn gen out.gn/x64.$buildType
+      #     Get-Content ./out.gn/x64.$buildType/args.gn | Write-Output
+      #     ninja -C out.gn/x64.$buildType
+      # - name: Prepare Artifact Directory
+      #   shell: pwsh
+      #   run: |
+      #     New-Item -ItemType Directory -Path ./artifact/ -Force
+      #     Copy-Item -Path ./v8/include -Recurse -Filter *.h -Destination ./artifact/include -Container
+      #     Copy-Item -Path ./v8/out.gn/x64.${{ matrix.config.build_type }}/obj/${{ matrix.config.library_name }} -Destination ./artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_${{ matrix.config.library_name }}
+      # - name: Upload Headers & Monolithic Lib
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: ${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_v8_monolith
+      #     path: artifact/
+
+      # - name: Publish Compiled Libraries
+      #   if: startsWith(github.event.head_commit.message, '[Release]') && github.ref == 'refs/heads/master'
+      #   uses: softprops/action-gh-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     name: V8 ${{ steps.version.outputs.content }}
+      #     tag_name: v${{ steps.version.outputs.content }}
+      #     files: |
+      #       artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_${{ matrix.config.library_name }}

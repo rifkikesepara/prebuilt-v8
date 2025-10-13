@@ -39,11 +39,43 @@ jobs:
       - name: Install MSVC/MSBuild
         uses: microsoft/setup-msbuild@v1.1
 
-      - name: Install Windows Debugging Tools
+      - name: Install Windows SDK Debugging Tools
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://aka.ms/windbg" -OutFile "dbgsetup.exe"
-          Start-Process -FilePath "dbgsetup.exe" -ArgumentList "/quiet" -Wait
+          $ErrorActionPreference = "Stop"
+          Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vs_BuildTools.exe" -OutFile "vs_BuildTools.exe"
+          Start-Process -FilePath ".\vs_BuildTools.exe" -ArgumentList `
+            "--quiet", "--wait", "--norestart", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.19041", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.20348", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.22000", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.22621", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.25398", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.26624", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.17763", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.18362", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.19041", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.20348", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.22000", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.22621", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.25398", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.26624", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.17763.Desktop", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.18362.Desktop", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.19041.Desktop", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.20348.Desktop", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.22000.Desktop", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.22621.Desktop", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.25398.Desktop", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.26624.Desktop", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.17763.DebuggingTools", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.18362.DebuggingTools", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.19041.DebuggingTools", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.20348.DebuggingTools", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.22000.DebuggingTools", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.22621.DebuggingTools", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.25398.DebuggingTools", `
+            "--add", "Microsoft.VisualStudio.Component.Windows10SDK.10.0.26624.DebuggingTools"
       - name: Get Target V8 Version
         id: version
         uses: juliangruber/read-file-action@v1

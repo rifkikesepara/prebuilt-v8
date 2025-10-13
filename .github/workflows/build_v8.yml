@@ -81,8 +81,14 @@ jobs:
           # Patch vs_toolchain.py to support VS 2022
           (Get-Content "build/vs_toolchain.py") -replace "MSVS_VERSIONS = collections.OrderedDict\\(\\[", "MSVS_VERSIONS = collections.OrderedDict([`n    ('17.0', 'Visual Studio 2022')," | Set-Content "build/vs_toolchain.py"
 
-          # Patch copy_cdb_to_output.py to skip missing debugger files
-          (Get-Content "build/win/copy_cdb_to_output.py") -replace "shutil.copy\\(source, target\\)", "if os.path.exists(source):`n    shutil.copy(source, target)`nelse:`n    print(f\"Skipping missing debugger file: {source}\")" | Set-Content "build/win/copy_cdb_to_output.py"
+          # Patch copy_cdb_to_output.py to skip missing debugger files safely
+          $patch = @"
+if os.path.exists(source):
+    shutil.copy(source, target)
+else:
+    print(f"Skipping missing debugger file: {source}")
+"@
+          (Get-Content "build/win/copy_cdb_to_output.py") -replace "shutil.copy\(source, target\)", $patch | Set-Content "build/win/copy_cdb_to_output.py"
 
           # Set Visual Studio override
           $vsPath = Get-ChildItem "C:\Program Files\Microsoft Visual Studio\2022" | Select-Object -First 1 | ForEach-Object { $_.FullName }

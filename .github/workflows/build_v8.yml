@@ -101,8 +101,9 @@ jobs:
         run: |
           New-Item -ItemType Directory -Path ./artifact/ -Force
           Copy-Item -Path ./v8/include -Recurse -Filter *.h -Destination ./artifact/include -Container
-          Copy-Item -Path "./v8/out.gn/x64.${{ matrix.config.build_type }}/${{ matrix.config.library_name }}" `
-            -Destination "./artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_${{ matrix.config.library_name }}"
+          Copy-Item -Path "./v8/out.gn/x64.${{ matrix.config.build_type }}" `
+            -Destination "./artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}" `
+            -Recurse -Force
 
       - name: Upload Headers & Monolithic Lib
         uses: actions/upload-artifact@v4
@@ -119,4 +120,4 @@ jobs:
           name: V8 ${{ steps.version.outputs.content }}
           tag_name: v${{ steps.version.outputs.content }}
           files: |
-            artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_${{ matrix.config.library_name }}
+            artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}/**

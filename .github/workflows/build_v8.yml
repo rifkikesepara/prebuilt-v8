@@ -111,6 +111,12 @@ jobs:
           name: ${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}_v8_monolith
           path: artifact/
 
+      - name: Zip Compiled Libraries
+        shell: pwsh
+        run: |
+          $zipName = "${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}.zip"
+          $sourceDir = "artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}"
+          Compress-Archive -Path "$sourceDir\*" -DestinationPath "artifact/$zipName" -Force
       - name: Publish Compiled Libraries
         if: startsWith(github.event.head_commit.message, '[Release]') && github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v1
@@ -120,4 +126,4 @@ jobs:
           name: V8 ${{ steps.version.outputs.content }}
           tag_name: v${{ steps.version.outputs.content }}
           files: |
-            artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}/**
+            artifact/${{ matrix.config.name }}_${{ matrix.config.architecture }}_${{ matrix.config.build_type }}.zip
